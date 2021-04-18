@@ -22,11 +22,16 @@ fn main() {
             SystemSet::new()
                 .with_run_criteria(FixedTimestep::step(TIME_STEP as f64))
                 .with_system(ball_collision_system.system())
-                .with_system(ball_movement_system.system()),
+                .with_system(ball_movement_system.system())
+                .with_system(paddle_movement_system.system())
         )
         .run();
 }
 
+struct Paddle {
+    speed: f32,
+    direction: Vec2,
+}
 struct Ball {
     velocity: Vec3,
 }
@@ -34,6 +39,7 @@ struct Ball {
 enum Collider {
     Solid,
     Scorable,
+    Paddle,
 }
 
 fn setup(
@@ -54,6 +60,19 @@ fn setup(
         .insert(Ball {
             velocity: 400.0 * Vec3::new(0.5, -0.5, 0.0).normalize(),
         });
+    
+    //paddle
+    commands
+        .spawn_bundle(SpriteBundle {
+            material: materials.add(Color::rgb(0.5, 0.5, 1.0).into()),
+            transform: Transform::from_xyz(0.0, 0.0, 0.0),
+            sprite: Sprite::new(Vec2::new(120.0, 30.0)),
+            ..Default::default()
+        })
+        .insert(Paddle { speed: 500.0, direction: Vec2::ZERO })
+        .insert(Collider::Paddle);
+
+    //walls    
     setup_walls(commands, materials, windows);
 }
 
@@ -140,7 +159,7 @@ fn ball_collision_system(
                 if let Collider::Scorable = *collider {
                     commands.entity(collider_entity).despawn();
                 } 
-                else if let Collider::Solid = *collider {
+                else {
                     match collision {
                         Collision::Left => {
                             if velocity.x > 0.0 {
@@ -166,5 +185,36 @@ fn ball_collision_system(
                 }
             }
         }
+    }
+}
+
+fn paddle_movement_system(keyboard_input: Res<Input<KeyCode>>, mut query: Query<(&mut Paddle, &mut Transform, & Sprite)>, windows: Res<Windows>){
+    if let Ok((mut paddle, mut transform, sprite)) = query.single_mut() {
+        let speed = paddle.speed.to_owned();
+        let direction = &mut paddle.direction;
+    
+        if keyboard_input.pressed(KeyCode::Left) {
+            direction.x -= 1.0;            
+        } else if keyboard_input.pressed(KeyCode::Right) {
+            direction.x += 1.0;
+        } else if keyboard_input.pressed(KeyCode::Up) {
+            direction.y +=  1.0;
+        } else if keyboard_input.pressed(KeyCode::Down) {
+            direction.y -= 1.0;
+        }
+
+        *direction= direction.normalize_or_zero();
+        
+        let translation = &mut transform.translation;
+
+        translation.x += direction.x * speed * TIME_STEP;
+        translation.y += direction.y * speed * TIME_STEP;
+        
+        let window = windows.get_primary().unwrap();
+        let xmax = window.width() * 0.5 - sprite.size.x * 0.5;
+        let ymax = window.height() * 0.5 - sprite.size.y * 0.5;
+
+        translation.x = translation.x.min(xmax).max(-1.0 * xmax);
+        translation.y = translation.y.min(ymax).max(-1.0 * ymax);
     }
 }
