@@ -11,6 +11,7 @@ const TIME_STEP: f32 = 1.0 / 60.0;
 fn main() {
     App::build()
         .add_plugins(DefaultPlugins)
+        .insert_resource(Scoreboard { score: 0})
         .insert_resource(ClearColor(Color::rgb(0.9, 0.9, 0.9)))
         .add_startup_system(setup.system())
         .add_system_set(
@@ -25,6 +26,7 @@ fn main() {
                 .with_system(ball_movement_system.system())
                 .with_system(paddle_movement_system.system())
         )
+        .add_system(scoreboard_system.system())
         .run();
 }
 
@@ -34,6 +36,10 @@ struct Paddle {
 }
 struct Ball {
     velocity: Vec3,
+}
+
+struct Scoreboard {
+    score: usize,
 }
 
 enum Collider {
@@ -46,6 +52,7 @@ fn setup(
     mut commands: Commands,
     mut materials: ResMut<Assets<ColorMaterial>>,
     windows: Res<Windows>,
+    asset_server: Res<AssetServer>,
 ) {
     //camera
     commands.spawn_bundle(OrthographicCameraBundle::new_2d());
@@ -72,8 +79,8 @@ fn setup(
         .insert(Paddle { speed: 500.0, direction: Vec2::ZERO })
         .insert(Collider::Paddle);
 
-    //walls    
-    setup_walls(commands, materials, windows);
+    //scoreboard    
+    setup_scoreboard(commands, materials, windows, asset_server);
 }
 
 fn brick_spawner(
@@ -95,6 +102,50 @@ fn brick_spawner(
             ..Default::default()
         })
         .insert(Collider::Scorable);
+}
+
+fn setup_scoreboard(
+    mut commands: Commands,
+    materials: ResMut<Assets<ColorMaterial>>,
+    windows: Res<Windows>,
+    asset_server: Res<AssetServer>,
+) {
+    commands.spawn_bundle(TextBundle {
+        text: Text {
+            sections: vec![
+                TextSection {
+                    value: "Score: ".to_string(),
+                    style: TextStyle {
+                        font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+                        font_size: 40.0,
+                        color: Color::rgb(0.5, 0.5, 1.0),
+                    },
+                },
+                TextSection {
+                    value: "".to_string(),
+                    style: TextStyle {
+                        font: asset_server.load("fonts/FiraMono-Medium.ttf"),
+                        font_size: 40.0,
+                        color: Color::rgb(1.0, 0.5, 0.5),
+                    },
+                },
+            ],
+            ..Default::default()
+        },
+        style: Style {
+            position_type: PositionType::Absolute,
+            position: Rect {
+                top: Val::Px(5.0),
+                left: Val::Px(5.0),
+                ..Default::default()
+            },
+            ..Default::default()
+        },
+        ..Default::default()
+    });
+
+    //walls
+    setup_walls(commands, materials, windows);
 }
 
 fn setup_walls(
@@ -217,4 +268,9 @@ fn paddle_movement_system(keyboard_input: Res<Input<KeyCode>>, mut query: Query<
         translation.x = translation.x.min(xmax).max(-1.0 * xmax);
         translation.y = translation.y.min(ymax).max(-1.0 * ymax);
     }
+}
+
+fn scoreboard_system(scoreboard: Res<Scoreboard>, mut query: Query<&mut Text>) {
+    let mut text = query.single_mut().unwrap();
+    text.sections[0].value = format!("Score: {}", scoreboard.score);
 }
