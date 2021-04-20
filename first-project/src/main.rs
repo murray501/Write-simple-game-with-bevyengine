@@ -56,6 +56,7 @@ fn setup(
 ) {
     //camera
     commands.spawn_bundle(OrthographicCameraBundle::new_2d());
+    commands.spawn_bundle(UiCameraBundle::default());
     //ball
     commands
         .spawn_bundle(SpriteBundle {
@@ -194,6 +195,7 @@ fn ball_collision_system(
     mut commands: Commands,
     mut ball_query: Query<(&mut Ball, &Transform, &Sprite)>,
     collider_query: Query<(Entity, &Collider, &Transform, &Sprite)>,
+    mut scoreboard: ResMut<Scoreboard>,
 ) {
     if let Ok((mut ball, ball_transform, sprite)) = ball_query.single_mut() {
         let ball_size = sprite.size;
@@ -209,6 +211,7 @@ fn ball_collision_system(
             if let Some(collision) = collision {
                 if let Collider::Scorable = *collider {
                     commands.entity(collider_entity).despawn();
+                    scoreboard.score += 1;
                 } 
                 else {
                     match collision {
@@ -272,5 +275,5 @@ fn paddle_movement_system(keyboard_input: Res<Input<KeyCode>>, mut query: Query<
 
 fn scoreboard_system(scoreboard: Res<Scoreboard>, mut query: Query<&mut Text>) {
     let mut text = query.single_mut().unwrap();
-    text.sections[0].value = format!("Score: {}", scoreboard.score);
+    text.sections[1].value = scoreboard.score.to_string();
 }
