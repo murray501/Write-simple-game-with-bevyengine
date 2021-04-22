@@ -53,11 +53,7 @@ fn main() {
                 .with_system(Cannon::update.system())
                 .with_system(Balls::update.system())
         )
-        .add_system_set(
-            SystemSet::new()
-                .with_run_criteria(FixedTimestep::step(0.2))
-                .with_system(Balls::spawner.system())
-        )
+        .add_system(Balls::spawner.system())
         .run();
 }
 
