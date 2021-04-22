@@ -55,8 +55,8 @@ fn main() {
         )
         .add_system_set(
             SystemSet::new()
-            .with_run_criteria(FixedTimestep::step(0.2))
-            .with_system(Balls::spawner.system())
+                .with_run_criteria(FixedTimestep::step(0.2))
+                .with_system(Balls::spawner.system())
         )
         .run();
 }
