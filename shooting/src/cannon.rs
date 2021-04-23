@@ -13,7 +13,7 @@ impl Cannon {
 
         commands.spawn_bundle(SpriteBundle {
             material: materials.add(Color::rgb(0.5, 0.5, 1.0).into()),
-            transform: Transform::from_xyz(-bounds.x / 2.0 + wall_thickness / 2.0 + size.x, 0.0, 1.0),
+            transform: Transform::from_xyz(-bounds.x * 0.5 + wall_thickness * 0.5 + size.x * 0.5, 0.0, 3.0),
             sprite: Sprite::new(size),
             ..Default::default()
         })
@@ -23,19 +23,30 @@ impl Cannon {
 
     pub fn update(keyboard_input: Res<Input<KeyCode>>, mut query: Query<(&Cannon, &mut Transform)>, params: Res<Params>) {
         let (it, mut transform) = query.single_mut().unwrap();
-        let mut direction = 0.0;
+        let mut direction = Vec2::new(0.0, 0.0);
         if keyboard_input.pressed(KeyCode::Up){
-            direction += 1.0;
+            direction.y += 1.0;
         }      
         
         if keyboard_input.pressed(KeyCode::Down){
-            direction -= 1.0;
+            direction.y -= 1.0;
+        } 
+
+        if keyboard_input.pressed(KeyCode::Left){
+            direction.x -= 1.0;
+        } 
+
+        if keyboard_input.pressed(KeyCode::Right){
+            direction.x += 1.0;
         } 
 
         let translation = &mut transform.translation;
-        translation.y += direction * it.speed * TIME_STEP;
+        translation.x += direction.x * it.speed * TIME_STEP;
+        translation.y += direction.y * it.speed * TIME_STEP;
 
-        let max = params.bounds.y / 2.0 - params.cannon.y / 2.0 - params.wall / 2.0; 
-        translation.y = translation.y.min(max).max(-max);
+        let xmax = params.bounds.x / 2.0 - params.cannon.x / 2.0 - params.wall / 2.0; 
+        let ymax = params.bounds.y / 2.0 - params.cannon.y / 2.0 - params.wall / 2.0; 
+        translation.x = translation.x.min(xmax).max(-xmax);
+        translation.y = translation.y.min(ymax).max(-ymax);
     }
 }

@@ -3,7 +3,9 @@ use bevy::prelude::*;
 
 pub struct BallTimer;
 
-pub struct Balls {
+pub struct Balls;
+
+pub struct Ball {
     speed: f32,
 }
 
@@ -26,11 +28,11 @@ impl Balls {
         if keyboard_input.pressed(KeyCode::Space) && can_shoot {
             commands.spawn_bundle(SpriteBundle {
                 material: materials.add(Color::rgb(1.0, 0.5, 0.5).into()),
-                transform: Transform::from_xyz(pos.x, pos.y, 0.0),
+                transform: Transform::from_xyz(pos.x, pos.y, 2.0),
                 sprite: Sprite::new(params.ball.clone()),
                 ..Default::default()
             })
-            .insert(Balls { speed: 500.0 })
+            .insert(Ball { speed: 500.0 })
             .insert(Collider::Ball);
             
             if let Ok(mut timer) = query_timer.single_mut() {
@@ -42,10 +44,9 @@ impl Balls {
         }
     }
 
-    pub fn update(mut commands: Commands, mut query: Query<(Entity, &Balls, &mut Transform)>, params: Res<Params>){
+    pub fn update(mut commands: Commands, mut query_balls: Query<(Entity, &Ball, &mut Transform)>, params: Res<Params>){
         let max = params.bounds.x / 2.0 - params.wall;
-   
-        for (entity, ball, mut transform) in query.iter_mut() {
+        for (entity, ball, mut transform) in query_balls.iter_mut() {
             transform.translation.x += ball.speed * TIME_STEP;
             if transform.translation.x >= max {
                 commands.entity(entity).despawn();                
