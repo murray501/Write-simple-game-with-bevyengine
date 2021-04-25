@@ -1,0 +1,8 @@
+[package]
+name = "state"
+version = "0.1.0"
+authors = ["murray501"]
+edition = "2018"
+
+[dependencies]
+bevy = "0.5.0"
