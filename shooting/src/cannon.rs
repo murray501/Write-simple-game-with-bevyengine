@@ -1,5 +1,6 @@
-use crate::{Collider, Params, TIME_STEP};
+use crate::{Collider, Params, TIME_STEP, Enemy, AppState};
 use bevy::prelude::*;
+use bevy::sprite::collide_aabb::collide;
 pub struct Cannon {
     speed: f32,
 }
@@ -21,6 +22,24 @@ impl Cannon {
         .insert(Collider::Cannon);
     } 
 
+    pub fn collision(mut commands: Commands, mut enemies: Query<(&Sprite, &Transform), With<Enemy>>,
+        mut self_query: Query<(&Sprite, &Transform), With<Cannon>>, mut state: ResMut<State<AppState>>)
+    {
+        let (self_sprite, self_transform) = self_query.single_mut().unwrap();
+    
+        for (sprite, transform) in enemies.iter() {
+            let collision = collide(
+                self_transform.translation,
+                self_sprite.size,
+                transform.translation,
+                sprite.size
+            );
+            if collision.is_some() {
+                state.set(AppState::Finish).unwrap();
+            }
+        }
+    }
+    
     pub fn update(keyboard_input: Res<Input<KeyCode>>, mut query: Query<(&Cannon, &mut Transform)>, params: Res<Params>) {
         let (it, mut transform) = query.single_mut().unwrap();
         let mut direction = Vec2::new(0.0, 0.0);

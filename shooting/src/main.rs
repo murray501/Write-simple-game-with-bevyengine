@@ -2,9 +2,10 @@ mod cannon;
 mod walls;
 mod balls;
 mod enemies;
+mod stages;
 
 use bevy::{
-    core::FixedTimestep,
+    //core::FixedTimestep,
     prelude::*,
     render::pass::ClearColor,
 };
@@ -12,10 +13,10 @@ use bevy::{
 use cannon::Cannon;
 use walls::Walls;
 use balls::{Balls, Ball};
-use enemies::{Enemies, EnemyTimer};
+use enemies::{Enemies, EnemyTimer, Enemy};
+use stages::{AppState, add_other_states};
 
 pub const TIME_STEP: f32 = 1.0 / 60.0;
-
 pub enum Collider {
     Cannon,
     Wall,
@@ -46,26 +47,35 @@ impl Params {
 }
 
 fn main() {
-    App::build()
+    let mut appbuilder = App::build();
+
+    appbuilder
         .add_plugins(DefaultPlugins)
         .insert_resource(Scoreboard { score: 0 })
         .insert_resource(ClearColor(Color::rgb(0.9, 0.9, 0.9)))
-        .insert_resource(Params::new())
-        .add_startup_system(setup.system())
-        .add_startup_system(Walls::setup.system())
-        .add_startup_system(Cannon::setup.system())
-        .add_system_set(
-            SystemSet::new()
-                .with_run_criteria(FixedTimestep::step(TIME_STEP as f64))
-                .with_system(Cannon::update.system())
-                .with_system(Balls::update.system())
-                .with_system(Enemies::update.system())
-                .with_system(Enemies::collision.system())
-        )
-        .add_system(Balls::spawner.system())
-        .add_system(Enemies::spawner.system())
-        .add_system(scoreboard_system.system())
-        .run();
+        .insert_resource(Params::new());
+    
+    add_other_states(&mut appbuilder);    
+    add_game_state(&mut appbuilder);
+    
+    appbuilder.run();    
+}
+
+fn add_game_state(appbuilder: &mut AppBuilder) -> &mut AppBuilder {
+    appbuilder
+        .add_system_set(SystemSet::on_enter(AppState::InGame)
+            .with_system(setup.system())
+            .with_system(Walls::setup.system())
+            .with_system(Cannon::setup.system()))
+        .add_system_set(SystemSet::on_update(AppState::InGame)
+            .with_system(Cannon::update.system())
+            .with_system(Cannon::collision.system())
+            .with_system(Balls::update.system())
+            .with_system(Enemies::update.system())
+            .with_system(Enemies::collision.system())
+            .with_system(Balls::spawner.system())
+            .with_system(Enemies::spawner.system())
+            .with_system(scoreboard_system.system()))
 }
 
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>){
