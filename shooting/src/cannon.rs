@@ -68,4 +68,14 @@ impl Cannon {
         translation.x = translation.x.min(xmax).max(-xmax);
         translation.y = translation.y.min(ymax).max(-ymax);
     }
+
+    pub fn reset(mut query: Query<&mut Transform, With<Cannon>>, params: Res<Params>){
+        let mut transform = query.single_mut().unwrap();
+        let wall_thickness = params.wall;
+        let size = params.cannon.clone();
+        let bounds = &params.bounds;
+        let translation = &mut transform.translation;
+        translation.x = -bounds.x * 0.5 + wall_thickness * 0.5 + size.x * 0.5;
+        translation.y = 0.0;
+    }
 }

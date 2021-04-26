@@ -84,8 +84,12 @@ impl Enemies {
             if transform.translation.x <= (minx + sprite.size.x * 0.5) {
                 commands.entity(entity).despawn();                
             }
-
-
         }
-    }    
+    } 
+    
+    pub fn cleanup(mut commands: Commands, mut query: Query<Entity, With<Enemy>>){
+        for entity in query.iter() {
+            commands.entity(entity).despawn();
+        }
+    }
 }

@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use crate::{Enemies, Cannon, scoreboard_reset};
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub enum AppState {
@@ -7,31 +8,26 @@ pub enum AppState {
     Finish,
 }
 
-struct ButtonData {
-    button_entity: Entity,
-}
-
 fn enter_start(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
     commands.spawn_bundle(UiCameraBundle::default());
-    add_button(commands, asset_server, materials, "Start", 150.0);
+    add_button(commands, asset_server, materials, "Start", 150.0);     
 }
 
 fn enter_finish(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
-    mut materials: ResMut<Assets<ColorMaterial>>,
+    mut materials: ResMut<Assets<ColorMaterial>>
 ){
     add_button(commands, asset_server, materials, "GameOver", 200.0);
 }
 
 fn add_button(mut commands: Commands,asset_server: Res<AssetServer>, mut materials: ResMut<Assets<ColorMaterial>>,
             buttontext: &str, buttonwidth: f32) {
-
-    let button_entity = commands
+    commands
         .spawn_bundle(ButtonBundle {
             style: Style {
                 size: Size::new(Val::Px(buttonwidth), Val::Px(65.0)),
@@ -59,9 +55,7 @@ fn add_button(mut commands: Commands,asset_server: Res<AssetServer>, mut materia
                 ),
                 ..Default::default()
             });
-        })
-        .id();
-    commands.insert_resource(ButtonData { button_entity });    
+        });  
 }
 
 fn button(
@@ -78,19 +72,23 @@ fn button(
     }
 }
 
-fn cleanup(mut commands: Commands, button_data: Res<ButtonData>) {
+pub fn cleanup(mut commands: Commands, mut query: Query<Entity, With<Button>>) {
+    let button_entity = query.single_mut().unwrap();
     commands
-        .entity(button_data.button_entity)
+        .entity(button_entity)
         .despawn_recursive();
 }
 
 pub fn add_other_states(appbuilder: &mut AppBuilder) -> &mut AppBuilder {
     appbuilder
-        .add_state(AppState::Start)
         .add_system_set(SystemSet::on_enter(AppState::Start).with_system(enter_start.system()))
         .add_system_set(SystemSet::on_update(AppState::Start).with_system(button.system()))
-        .add_system_set(SystemSet::on_exit(AppState::Start).with_system(cleanup.system()))
-        .add_system_set(SystemSet::on_enter(AppState::Finish).with_system(enter_finish.system()))
-        .add_system_set(SystemSet::on_exit(AppState::InGame).with_system(cleanup.system()))
+        .add_system_set(SystemSet::on_enter(AppState::Finish).with_system(enter_finish.system()))  
         .add_system_set(SystemSet::on_update(AppState::Finish).with_system(button.system()))
+        .add_system_set(SystemSet::on_exit(AppState::Finish)
+            .with_system(cleanup.system())
+            .with_system(Enemies::cleanup.system())
+            .with_system(Cannon::reset.system())
+            .with_system(scoreboard_reset.system())
+        )
 }
