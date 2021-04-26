@@ -64,7 +64,7 @@ fn add_button(mut commands: Commands,asset_server: Res<AssetServer>, mut materia
     commands.insert_resource(ButtonData { button_entity });    
 }
 
-fn start(
+fn button(
     mut state: ResMut<State<AppState>>,
     mut interaction_query: Query<&Interaction, With<Button>>,
 ) {
@@ -88,7 +88,9 @@ pub fn add_other_states(appbuilder: &mut AppBuilder) -> &mut AppBuilder {
     appbuilder
         .add_state(AppState::Start)
         .add_system_set(SystemSet::on_enter(AppState::Start).with_system(enter_start.system()))
-        .add_system_set(SystemSet::on_update(AppState::Start).with_system(start.system()))
+        .add_system_set(SystemSet::on_update(AppState::Start).with_system(button.system()))
         .add_system_set(SystemSet::on_exit(AppState::Start).with_system(cleanup.system()))
         .add_system_set(SystemSet::on_enter(AppState::Finish).with_system(enter_finish.system()))
+        .add_system_set(SystemSet::on_exit(AppState::InGame).with_system(cleanup.system()))
+        .add_system_set(SystemSet::on_update(AppState::Finish).with_system(button.system()))
 }

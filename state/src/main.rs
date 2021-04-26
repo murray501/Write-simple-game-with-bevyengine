@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 enum AppState {
     Start,
@@ -12,33 +13,38 @@ fn main() {
         .add_state(AppState::Start)
         .add_system_set(SystemSet::on_enter(AppState::Start).with_system(setup_start.system()))
         .add_system_set(SystemSet::on_update(AppState::Start).with_system(start.system()))
-        .add_system_set(SystemSet::on_exit(AppState::Start).with_system(cleanup_menu.system()))
-        .add_system_set(SystemSet::on_enter(AppState::InGame).with_system(setup_game.system()))
+        .add_system_set(SystemSet::on_exit(AppState::Start)
+            .with_system(cleanup_menu.system())
+            .with_system(setup_game.system())
+        )
         .add_system_set(SystemSet::on_update(AppState::InGame).with_system(ingame.system()))
         .add_system_set(SystemSet::on_enter(AppState::Finish).with_system(setup_finish.system()))
+        .add_system_set(SystemSet::on_update(AppState::Finish).with_system(start.system()))
+        .add_system_set(SystemSet::on_exit(AppState::Finish)
+            .with_system(cleanup_menu.system())
+            .with_system(reset_game.system())
+        )
         .run();
 }
 
-struct StartData {
-    button_entity: Entity,
-}
-
-fn cleanup_menu(mut commands: Commands, start_data: Res<StartData>) {
+fn cleanup_menu(mut commands: Commands, mut query: Query<Entity, With<Button>>) {
+    let button_entity = query.single_mut().unwrap();
     commands
-        .entity(start_data.button_entity)
+        .entity(button_entity)
         .despawn_recursive();
 }
 
-fn setup_start(
+fn add_button(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut materials: ResMut<Assets<ColorMaterial>>,
-) {
-    commands.spawn_bundle(UiCameraBundle::default());
-    let button_entity = commands
+    title: &str,
+    width: f32,
+){
+    commands
         .spawn_bundle(ButtonBundle {
             style: Style {
-                size: Size::new(Val::Px(150.0), Val::Px(65.0)),
+                size: Size::new(Val::Px(width), Val::Px(65.0)),
                 // center button
                 margin: Rect::all(Val::Auto),
                 // horizontally center child text
@@ -53,7 +59,7 @@ fn setup_start(
         .with_children(|parent| {
             parent.spawn_bundle(TextBundle {
                 text: Text::with_section(
-                    "Play",
+                    title,
                     TextStyle {
                         font: asset_server.load("fonts/FiraSans-Bold.ttf"),
                         font_size: 40.0,
@@ -63,9 +69,16 @@ fn setup_start(
                 ),
                 ..Default::default()
             });
-        })
-        .id();
-    commands.insert_resource(StartData { button_entity });
+        });
+}
+
+fn setup_start(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+) {
+    commands.spawn_bundle(UiCameraBundle::default());
+    add_button(commands, asset_server, materials, "Play", 150.0);
 }
 
 fn start(
@@ -80,6 +93,11 @@ fn start(
             _ => {}
         }
     }
+}
+
+fn reset_game(mut commands: Commands, mut query: Query<&mut Timer>) {
+    let mut timer = query.single_mut().unwrap();
+    timer.reset();
 }
 
 fn setup_game(mut commands: Commands, asset_server: Res<AssetServer>) {
@@ -133,7 +151,7 @@ fn ingame(mut query_text: Query<&mut Text>,  mut query_timer: Query<&mut Timer>,
     }
 
     let mut text = query_text.single_mut().unwrap();
-    text.sections[1].value = timer.elapsed_secs().to_string();
+    text.sections[1].value = timer.elapsed_secs().trunc().to_string();
 }
 
 fn setup_finish(
@@ -141,35 +159,5 @@ fn setup_finish(
     asset_server: Res<AssetServer>,
     mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    let button_entity = commands
-        .spawn_bundle(ButtonBundle {
-            style: Style {
-                size: Size::new(Val::Px(200.0), Val::Px(65.0)),
-                // center button
-                margin: Rect::all(Val::Auto),
-                // horizontally center child text
-                justify_content: JustifyContent::Center,
-                // vertically center child text
-                align_items: AlignItems::Center,
-                ..Default::default()
-            },
-            material: materials.add(Color::rgb(0.15, 0.15, 0.15).into()),
-            ..Default::default()
-        })
-        .with_children(|parent| {
-            parent.spawn_bundle(TextBundle {
-                text: Text::with_section(
-                    "Game Over",
-                    TextStyle {
-                        font: asset_server.load("fonts/FiraSans-Bold.ttf"),
-                        font_size: 40.0,
-                        color: Color::rgb(0.9, 0.9, 0.9),
-                    },
-                    Default::default(),
-                ),
-                ..Default::default()
-            });
-        })
-        .id();
-    commands.insert_resource(StartData { button_entity });
+    add_button(commands, asset_server, materials, "Game Over", 200.0);
 }
