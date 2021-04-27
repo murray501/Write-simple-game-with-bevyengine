@@ -3,9 +3,9 @@ mod walls;
 mod balls;
 mod enemies;
 mod stages;
+mod particle;
 
 use bevy::{
-    //core::FixedTimestep,
     prelude::*,
     render::pass::ClearColor,
 };
@@ -15,6 +15,7 @@ use walls::Walls;
 use balls::{Balls, Ball};
 use enemies::{Enemies, EnemyTimer, Enemy};
 use stages::{AppState, add_other_states, cleanup};
+use particle::Particles;
 
 pub struct MainTimer(Timer);
 
@@ -81,15 +82,22 @@ fn add_game_state(appbuilder: &mut AppBuilder) -> &mut AppBuilder {
             .with_system(Balls::spawner.system())
             .with_system(Enemies::spawner.system())
             .with_system(scoreboard_system.system())
-            .with_system(timer_system.system()))
+            .with_system(timer_system.system())
+            .with_system(Particles::update.system()))
 }
 
-fn setup(mut commands: Commands, asset_server: Res<AssetServer>){
+fn setup(mut commands: Commands, asset_server: Res<AssetServer>, mut materials: ResMut<Assets<ColorMaterial>>){
     commands.spawn_bundle(OrthographicCameraBundle::new_2d());
     commands.spawn_bundle(UiCameraBundle::default());
     commands.spawn().insert(Timer::from_seconds(1.0, false))
         .insert(EnemyTimer);
 
+    // particles
+    commands.insert_resource(Particles {
+        speed: 100.0,
+        num_divide: 8,
+        material: materials.add(Color::rgb(1.0, 0.0, 0.0).into())
+    });    
     // scoreboard
     commands.spawn_bundle(TextBundle {
         text: Text {

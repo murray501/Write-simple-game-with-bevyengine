@@ -1,4 +1,4 @@
-use crate::{Collider, Params, TIME_STEP, Ball, Scoreboard};
+use crate::{Collider, Params, TIME_STEP, Ball, Scoreboard, Particles};
 use bevy::prelude::*;
 use bevy::sprite::collide_aabb::collide;
 use rand::Rng;
@@ -46,7 +46,8 @@ impl Enemies {
     }
     
     pub fn collision(mut commands: Commands, mut enemies: Query<(Entity, &Sprite, &Transform), With<Enemy>>,
-        mut balls: Query<(Entity, &Sprite, &Transform), With<Ball>>, mut scoreboard: ResMut<Scoreboard>){
+        mut balls: Query<(Entity, &Sprite, &Transform), With<Ball>>, mut scoreboard: ResMut<Scoreboard>,
+        particles: Res<Particles>){
         
         for (self_entity, self_sprite, self_transform) in enemies.iter() {
             for (ball_entity, ball_sprite, ball_transform) in balls.iter() {
@@ -57,9 +58,11 @@ impl Enemies {
                     ball_sprite.size
                 );
                 if collision.is_some() {
+                    let pos = Vec2::new(ball_transform.translation.x, ball_transform.translation.y);
                     commands.entity(self_entity).despawn();
                     commands.entity(ball_entity).despawn();
                     scoreboard.score += 1;
+                    Particles::spawn(&mut commands, pos, (*particles).clone());
                 }
             }
         }
