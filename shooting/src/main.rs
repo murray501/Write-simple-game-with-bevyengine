@@ -32,6 +32,7 @@ pub struct Params {
     pub cannon: Vec2,
     pub wall: f32,
     pub ball: Vec2,
+    pub asteroid: Handle<Texture>,
 }
 
 pub struct Scoreboard {

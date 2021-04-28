@@ -11,7 +11,7 @@ pub struct Ball {
 
 impl Balls {
     pub fn spawner(mut commands: Commands, mouse_input: Res<Input<MouseButton>>, mut materials: ResMut<Assets<ColorMaterial>>, 
-        query: Query<(&Cannon, &Transform)>, params: Res<Params>, 
+        query: Query<(&Cannon, &Sprite, &Transform)>, params: Res<Params>, 
         mut query_timer: Query<&mut Timer, With<BallTimer>>, time: Res<Time>, windows: Res<Windows>)
     {
         let mut can_shoot = true;
@@ -22,8 +22,8 @@ impl Balls {
             }
         }
 
-        let (_cannon, transform) = query.single().unwrap();
-        let cannon_position = Vec2::new(transform.translation.x, transform.translation.y);
+        let (_cannon, sprite,transform) = query.single().unwrap();
+        let cannon_position = Vec2::new(transform.translation.x + sprite.size.x * 0.5, transform.translation.y);
         
         if mouse_input.just_pressed(MouseButton::Left) && can_shoot {
             let win = windows.get_primary().unwrap();
@@ -33,7 +33,7 @@ impl Balls {
             let ball_speed = (mouse_position - cannon_position).normalize_or_zero() * 500.0;
             
             commands.spawn_bundle(SpriteBundle {
-                material: materials.add(Color::rgb(1.0, 0.5, 0.5).into()),
+                material: materials.add(Color::rgb(0.0, 0.0, 1.0).into()),
                 transform: Transform::from_xyz(cannon_position.x, cannon_position.y, 2.0),
                 sprite: Sprite::new(params.ball.clone()),
                 ..Default::default()

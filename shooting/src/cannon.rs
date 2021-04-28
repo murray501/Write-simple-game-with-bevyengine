@@ -6,20 +6,28 @@ pub struct Cannon {
 }
 
 impl Cannon {
-    pub fn setup(mut commands: Commands, mut materials: ResMut<Assets<ColorMaterial>>, params: Res<Params>)
+    pub fn setup(mut commands: Commands, mut materials: ResMut<Assets<ColorMaterial>>, params: Res<Params>,
+            asset_server: Res<AssetServer>)
     {
         let wall_thickness = params.wall;
         let size = params.cannon.clone();
         let bounds = &params.bounds;
-
+        let texture_handle = asset_server.load("images/player-rocket.png");
         commands.spawn_bundle(SpriteBundle {
-            material: materials.add(Color::rgb(0.5, 0.5, 1.0).into()),
+            material: materials.add(texture_handle.into()),
             transform: Transform::from_xyz(-bounds.x * 0.5 + wall_thickness * 0.5 + size.x * 0.5, 0.0, 3.0),
             sprite: Sprite::new(size),
             ..Default::default()
         })
         .insert(Cannon { speed: 500.0 })
-        .insert(Collider::Cannon);
+        .insert(Collider::Cannon)
+        .with_children(|parent| {
+            parent.spawn_bundle(SpriteBundle {
+                material: materials.add(Color::rgba(1.0, 0.0, 0.0, 0.1).into()),
+                sprite: Sprite::new(size * 0.7),
+                ..Default::default()
+            });
+        });
     } 
 
     pub fn collision(mut commands: Commands, mut enemies: Query<(&Sprite, &Transform), With<Enemy>>,
@@ -30,9 +38,9 @@ impl Cannon {
         for (sprite, transform) in enemies.iter() {
             let collision = collide(
                 self_transform.translation,
-                self_sprite.size,
+                self_sprite.size * 0.7,
                 transform.translation,
-                sprite.size
+                sprite.size * 0.8
             );
             if collision.is_some() {
                 state.set(AppState::Finish).unwrap();

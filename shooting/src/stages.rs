@@ -21,9 +21,10 @@ fn enter_start(
     commands.insert_resource(
         Params {
             bounds: Vec2::new(window.width(), window.height()),
-            cannon: Vec2::new(40.0, 40.0),
+            cannon: Vec2::new(100.0, 60.0),
             wall: 20.0,
             ball: Vec2::new(10.0, 10.0),
+            asteroid: asset_server.load("images/asteroid.png"),
         }
     );  
 
@@ -52,7 +53,7 @@ fn add_button(mut commands: Commands,asset_server: Res<AssetServer>, mut materia
                 align_items: AlignItems::Center,
                 ..Default::default()
             },
-            material: materials.add(Color::rgb(0.15, 0.15, 0.15).into()),
+            material: materials.add(Color::rgb(0.3, 0.3, 0.3).into()),
             ..Default::default()
         })
         .with_children(|parent| {

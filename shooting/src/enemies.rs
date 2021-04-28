@@ -29,9 +29,9 @@ impl Enemies {
             let y = rng.gen_range(ymin..ymax);
             let speedy = rng.gen_range(-500..500);
             let speedx = rng.gen_range(100..500);
-            let size = rng.gen_range(5..100);
+            let size = rng.gen_range(10..100);
             commands.spawn_bundle(SpriteBundle {
-                material: materials.add(Color::rgb(0.0, 0.5, 0.5).into()),
+                material: materials.add(params.asteroid.clone().into()),
                 transform: Transform::from_xyz(x,y, 1.0),
                 sprite: Sprite::new(Vec2::new(size as f32, size as f32)),
                 ..Default::default()
