@@ -28,25 +28,14 @@ pub enum Collider {
 }
 
 pub struct Params {
-    bounds: Vec2,
-    cannon: Vec2,
-    wall: f32,
-    ball: Vec2,
+    pub bounds: Vec2,
+    pub cannon: Vec2,
+    pub wall: f32,
+    pub ball: Vec2,
 }
 
 pub struct Scoreboard {
     score: usize,
-}
-
-impl Params {
-    fn new() -> Self {
-        Params {
-            bounds: Vec2::new(900.0, 600.0),
-            cannon: Vec2::new(40.0, 40.0),
-            wall: 20.0,
-            ball: Vec2::new(10.0, 10.0),
-        }
-    }
 }
 
 fn main() {
@@ -57,7 +46,6 @@ fn main() {
         .add_state(AppState::Start)
         .insert_resource(Scoreboard { score: 0 })
         .insert_resource(ClearColor(Color::rgb(0.9, 0.9, 0.9)))
-        .insert_resource(Params::new())
         .insert_resource(MainTimer(Timer::from_seconds(60.0, false)));
     
     add_other_states(&mut appbuilder);    
@@ -72,7 +60,8 @@ fn add_game_state(appbuilder: &mut AppBuilder) -> &mut AppBuilder {
             .with_system(cleanup.system())
             .with_system(setup.system())
             .with_system(Walls::setup.system())
-            .with_system(Cannon::setup.system()))
+            .with_system(Cannon::setup.system())
+        )
         .add_system_set(SystemSet::on_update(AppState::InGame)
             .with_system(Cannon::update.system())
             .with_system(Cannon::collision.system())
@@ -86,7 +75,8 @@ fn add_game_state(appbuilder: &mut AppBuilder) -> &mut AppBuilder {
             .with_system(Particles::update.system()))
 }
 
-fn setup(mut commands: Commands, asset_server: Res<AssetServer>, mut materials: ResMut<Assets<ColorMaterial>>){
+fn setup(mut commands: Commands, asset_server: Res<AssetServer>, mut materials: ResMut<Assets<ColorMaterial>>)
+{    
     commands.spawn_bundle(OrthographicCameraBundle::new_2d());
     commands.spawn_bundle(UiCameraBundle::default());
     commands.spawn().insert(Timer::from_seconds(1.0, false))
@@ -97,7 +87,8 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>, mut materials: 
         speed: 100.0,
         num_divide: 8,
         material: materials.add(Color::rgb(1.0, 0.0, 0.0).into())
-    });    
+    });   
+        
     // scoreboard
     commands.spawn_bundle(TextBundle {
         text: Text {

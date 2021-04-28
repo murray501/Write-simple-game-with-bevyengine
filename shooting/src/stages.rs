@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::{Enemies, Cannon, scoreboard_reset};
+use crate::{Enemies, Cannon, scoreboard_reset, Params};
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub enum AppState {
@@ -12,9 +12,22 @@ fn enter_start(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut materials: ResMut<Assets<ColorMaterial>>,
+    windows: Res<Windows>,
 ) {
     commands.spawn_bundle(UiCameraBundle::default());
-    add_button(commands, asset_server, materials, "Start", 150.0);     
+   
+    //params
+    let window = windows.get_primary().unwrap();
+    commands.insert_resource(
+        Params {
+            bounds: Vec2::new(window.width(), window.height()),
+            cannon: Vec2::new(40.0, 40.0),
+            wall: 20.0,
+            ball: Vec2::new(10.0, 10.0),
+        }
+    );  
+
+    add_button(commands, asset_server, materials, "Start", 150.0); 
 }
 
 fn enter_finish(
