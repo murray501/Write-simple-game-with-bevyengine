@@ -30,7 +30,7 @@ impl Balls {
             let cursor_position = win.cursor_position().unwrap();
             let size = Vec2::new(win.width() as f32, win.height() as f32);
             let mouse_position = cursor_position - size * 0.5;
-            let ball_speed = (mouse_position - cannon_position).normalize_or_zero() * 500.0;
+            let ball_speed = mouse_position.normalize_or_zero() * 500.0;
             
             commands.spawn_bundle(SpriteBundle {
                 material: materials.add(Color::rgb(1.0, 1.0, 0.0).into()),
@@ -51,8 +51,8 @@ impl Balls {
     }
 
     pub fn update(mut commands: Commands, mut query_balls: Query<(Entity, &Ball, &mut Transform)>, params: Res<Params>){
-        let xbound = params.bounds.x / 2.0 - params.wall;
-        let ybound = params.bounds.y / 2.0 - params.wall;
+        let xbound = params.background.x / 2.0;
+        let ybound = params.background.y / 2.0;
         for (entity, ball, mut transform) in query_balls.iter_mut() {
             transform.translation.x += ball.speed.x * TIME_STEP;
             transform.translation.y += ball.speed.y * TIME_STEP;

@@ -15,20 +15,17 @@ impl Cannon {
         let texture_handle = asset_server.load("images/player-rocket.png");
         commands.spawn_bundle(SpriteBundle {
             material: materials.add(texture_handle.into()),
-            transform: Transform::from_xyz(-bounds.x * 0.5 + wall_thickness * 0.5 + size.x * 0.5, 0.0, 3.0),
+            //transform: Transform::from_xyz(-bounds.x * 0.5 + wall_thickness * 0.5 + size.x * 0.5, 0.0, 3.0),
             sprite: Sprite::new(size),
             ..Default::default()
         })
         .insert(Cannon { speed: 500.0 })
         .insert(Collider::Cannon)
         .with_children(|parent| {
-            parent.spawn_bundle(SpriteBundle {
-                material: materials.add(Color::rgba(1.0, 0.0, 0.0, 0.1).into()),
-                sprite: Sprite::new(size * 0.7),
-                ..Default::default()
+            parent.spawn_bundle(OrthographicCameraBundle::new_2d());
             });
-        });
     } 
+
 
     pub fn collision(mut commands: Commands, mut enemies: Query<(&Sprite, &Transform), With<Enemy>>,
         mut self_query: Query<(&Sprite, &Transform), With<Cannon>>, mut state: ResMut<State<AppState>>)
@@ -73,8 +70,8 @@ impl Cannon {
         translation.x += direction.x * it.speed * TIME_STEP;
         translation.y += direction.y * it.speed * TIME_STEP;
         
-        let xmax = params.bounds.x / 2.0 - params.cannon.x / 2.0 - params.wall / 2.0; 
-        let ymax = params.bounds.y / 2.0 - params.cannon.y / 2.0 - params.wall / 2.0; 
+        let xmax = params.background.x / 2.0 - params.bounds.x / 2.0 - params.cannon.x / 2.0; 
+        let ymax = params.background.y / 2.0 - params.bounds.y / 2.0 - params.cannon.y / 2.0; 
         translation.x = translation.x.min(xmax).max(-xmax);
         translation.y = translation.y.min(ymax).max(-ymax);
     }
@@ -85,7 +82,7 @@ impl Cannon {
         let size = params.cannon.clone();
         let bounds = &params.bounds;
         let translation = &mut transform.translation;
-        translation.x = -bounds.x * 0.5 + wall_thickness * 0.5 + size.x * 0.5;
+        translation.x = 0.0;
         translation.y = 0.0;
     }
 }

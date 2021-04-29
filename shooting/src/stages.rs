@@ -15,12 +15,12 @@ fn enter_start(
     windows: Res<Windows>,
 ) {
     commands.spawn_bundle(UiCameraBundle::default());
-    commands.spawn_bundle(OrthographicCameraBundle::new_2d());
    
     //params
     let window = windows.get_primary().unwrap();
     commands.insert_resource(
         Params {
+            background: Vec2::new(2048.0, 1536.0),
             bounds: Vec2::new(window.width(), window.height()),
             cannon: Vec2::new(100.0, 60.0),
             wall: 20.0,

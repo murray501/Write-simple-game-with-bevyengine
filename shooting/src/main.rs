@@ -28,6 +28,7 @@ pub enum Collider {
 }
 
 pub struct Params {
+    pub background: Vec2,
     pub bounds: Vec2,
     pub cannon: Vec2,
     pub wall: f32,
@@ -71,7 +72,7 @@ fn add_game_state(appbuilder: &mut AppBuilder) -> &mut AppBuilder {
         .add_system_set(SystemSet::on_exit(AppState::Start)
             .with_system(cleanup.system())
             .with_system(setup.system())
-            .with_system(Walls::setup.system())
+            //.with_system(Walls::setup.system())
             .with_system(Cannon::setup.system())
         )
         .add_system_set(SystemSet::on_update(AppState::InGame)

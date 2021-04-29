@@ -7,9 +7,16 @@ pub struct EnemyTimer;
 
 pub struct Enemies;
 
+#[derive (PartialEq, Eq)]
+enum Direction {
+    Left,
+    Right,
+}
+
 pub struct Enemy {
     speed: Vec2,
     angle: f32,
+    direction: Direction,
 }
 
 impl Enemies {
@@ -23,13 +30,29 @@ impl Enemies {
         } 
 
         if can_spawn {
-            let x = params.bounds.x * 0.5 - params.wall * 0.5 - 15.0;
-            let ymax = params.bounds.y * 0.5 - params.wall * 0.5 - 15.0;
-            let ymin = -1.0 * ymax;
             let mut rng = rand::thread_rng();
+            let direction = 
+            if rng.gen_range(0.0..1.0) > 0.5 {
+                Direction::Left
+            } else {
+                Direction::Right
+            };
+            let x =
+            if direction == Direction::Left {
+                params.background.x * 0.5 + params.cannon.x * 0.5
+            } else {
+                -params.background.x * 0.5 - params.cannon.x * 0.5
+            };
+            let ymax = params.background.y * 0.5 - params.cannon.y * 0.5;
+            let ymin = -1.0 * ymax;            
             let y = rng.gen_range(ymin..ymax);
             let speedy = rng.gen_range(-100..100);
-            let speedx = rng.gen_range(100..300);
+            let speedx = 
+            if direction == Direction::Left {
+                rng.gen_range(-300..-100)
+            } else {
+                rng.gen_range(100..300)
+            };
             let size = params.spacejunk.to_owned() * rng.gen_range(0.3..0.5);
             let angle = rng.gen_range(-100..100);
             commands.spawn_bundle(SpriteBundle {
@@ -38,7 +61,7 @@ impl Enemies {
                 sprite: Sprite::new(size),
                 ..Default::default()
             })
-            .insert(Enemy {speed: Vec2::new(speedx as f32, speedy as f32), angle: angle as f32})
+            .insert(Enemy {speed: Vec2::new(speedx as f32, speedy as f32), angle: angle as f32, direction})
             .insert(Collider::Enemy);
 
             let interval = rng.gen_range(1..4); 
@@ -61,8 +84,8 @@ impl Enemies {
                 );
                 if collision.is_some() {
                     let pos = Vec2::new(ball_transform.translation.x, ball_transform.translation.y);
-                    commands.entity(self_entity).despawn_recursive();
-                    commands.entity(ball_entity).despawn_recursive();
+                    commands.entity(self_entity).despawn();
+                    commands.entity(ball_entity).despawn();
                     scoreboard.score += 1;
                     Particles::spawn(&mut commands, pos, (*particles).clone());
                 }
@@ -71,13 +94,13 @@ impl Enemies {
     }
 
     pub fn update(mut commands: Commands, mut query: Query<(Entity, &mut Enemy, &Sprite, &mut Transform)>, params: Res<Params>){
-        let minx = - params.bounds.x * 0.5 + params.wall * 0.5 ;
+    
         
         for (entity, mut enemy, sprite,mut transform) in query.iter_mut() {
             transform.translation.y += enemy.speed.y * TIME_STEP;
-            transform.translation.x -= enemy.speed.x * TIME_STEP;
+            transform.translation.x += enemy.speed.x * TIME_STEP;
 
-            let maxy = params.bounds.y * 0.5 + sprite.size.y;
+            let maxy = params.background.y * 0.5 + sprite.size.y;
             let miny = maxy * -1.0;
 
             if transform.translation.y < miny {
@@ -88,15 +111,20 @@ impl Enemies {
 
             transform.rotate(Quat::from_rotation_z((enemy.angle * TIME_STEP).to_radians()));
 
-            if transform.translation.x <= (minx + sprite.size.x * 0.5) {
-                commands.entity(entity).despawn_recursive();                
-            }
+            let maxx = params.background.x * 0.5 + sprite.size.x * 0.5;
+            let minx = -maxx;
+
+            if enemy.direction == Direction::Left && transform.translation.x < minx {
+                commands.entity(entity).despawn();                
+            } else if enemy.direction == Direction::Right && transform.translation.x > maxx {
+                commands.entity(entity).despawn();
+            } 
         }
     } 
     
     pub fn cleanup(mut commands: Commands, mut query: Query<Entity, With<Enemy>>){
         for entity in query.iter() {
-            commands.entity(entity).despawn_recursive();
+            commands.entity(entity).despawn();
         }
     }
 }
