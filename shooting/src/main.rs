@@ -32,7 +32,8 @@ pub struct Params {
     pub cannon: Vec2,
     pub wall: f32,
     pub ball: Vec2,
-    pub asteroid: Handle<Texture>,
+    pub spacejunk_img: Handle<Texture>,
+    pub spacejunk: Vec2,
 }
 
 pub struct Scoreboard {
@@ -43,11 +44,21 @@ fn main() {
     let mut appbuilder = App::build();
 
     appbuilder
+        /* 
+        .insert_resource(WindowDescriptor {
+            title: "Space Shooter".to_string(),
+            width: 2048.0 * 0.7,
+            height: 1536.0 * 0.5,
+            vsync: true,
+            resizable: false,
+            ..Default::default() 
+        })
+        */
         .add_plugins(DefaultPlugins)
         .add_state(AppState::Start)
         .insert_resource(Scoreboard { score: 0 })
         .insert_resource(ClearColor(Color::rgb(0.9, 0.9, 0.9)))
-        .insert_resource(MainTimer(Timer::from_seconds(60.0, false)));
+        .insert_resource(MainTimer(Timer::from_seconds(180.0, false)));
     
     add_other_states(&mut appbuilder);    
     add_game_state(&mut appbuilder);
@@ -78,8 +89,6 @@ fn add_game_state(appbuilder: &mut AppBuilder) -> &mut AppBuilder {
 
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>, mut materials: ResMut<Assets<ColorMaterial>>)
 {    
-    commands.spawn_bundle(OrthographicCameraBundle::new_2d());
-    commands.spawn_bundle(UiCameraBundle::default());
     commands.spawn().insert(Timer::from_seconds(1.0, false))
         .insert(EnemyTimer);
 
@@ -132,8 +141,8 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>, mut materials: 
         style: Style {
             position_type: PositionType::Absolute,
             position: Rect {
-                top: Val::Px(5.0),
-                left: Val::Px(5.0),
+                top: Val::Px(20.0),
+                left: Val::Px(20.0),
                 ..Default::default()
             },
             ..Default::default()
@@ -145,7 +154,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>, mut materials: 
 fn scoreboard_system(scoreboard: Res<Scoreboard>, mut query: Query<&mut Text>, timer: Res<MainTimer>) {
     let mut text = query.single_mut().unwrap();
     text.sections[1].value = scoreboard.score.to_string();
-    text.sections[3].value = timer.0.elapsed_secs().trunc().to_string();
+    text.sections[3].value = (180.0 - timer.0.elapsed_secs().trunc()).to_string();
 }
 
 pub fn scoreboard_reset(mut scoreboard: ResMut<Scoreboard>, mut timer: ResMut<MainTimer>) {

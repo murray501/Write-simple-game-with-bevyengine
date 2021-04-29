@@ -9,6 +9,7 @@ pub struct Enemies;
 
 pub struct Enemy {
     speed: Vec2,
+    angle: f32,
 }
 
 impl Enemies {
@@ -27,16 +28,17 @@ impl Enemies {
             let ymin = -1.0 * ymax;
             let mut rng = rand::thread_rng();
             let y = rng.gen_range(ymin..ymax);
-            let speedy = rng.gen_range(-500..500);
-            let speedx = rng.gen_range(100..500);
-            let size = rng.gen_range(10..100);
+            let speedy = rng.gen_range(-100..100);
+            let speedx = rng.gen_range(100..300);
+            let size = params.spacejunk.to_owned() * rng.gen_range(0.3..0.5);
+            let angle = rng.gen_range(-100..100);
             commands.spawn_bundle(SpriteBundle {
-                material: materials.add(params.asteroid.clone().into()),
-                transform: Transform::from_xyz(x,y, 1.0),
-                sprite: Sprite::new(Vec2::new(size as f32, size as f32)),
+                material: materials.add(params.spacejunk_img.clone().into()),
+                transform: Transform::from_xyz(x, y, 1.0),
+                sprite: Sprite::new(size),
                 ..Default::default()
             })
-            .insert(Enemy {speed: Vec2::new(speedx as f32, speedy as f32)})
+            .insert(Enemy {speed: Vec2::new(speedx as f32, speedy as f32), angle: angle as f32})
             .insert(Collider::Enemy);
 
             let interval = rng.gen_range(1..4); 
@@ -59,8 +61,8 @@ impl Enemies {
                 );
                 if collision.is_some() {
                     let pos = Vec2::new(ball_transform.translation.x, ball_transform.translation.y);
-                    commands.entity(self_entity).despawn();
-                    commands.entity(ball_entity).despawn();
+                    commands.entity(self_entity).despawn_recursive();
+                    commands.entity(ball_entity).despawn_recursive();
                     scoreboard.score += 1;
                     Particles::spawn(&mut commands, pos, (*particles).clone());
                 }
@@ -75,24 +77,26 @@ impl Enemies {
             transform.translation.y += enemy.speed.y * TIME_STEP;
             transform.translation.x -= enemy.speed.x * TIME_STEP;
 
-            let maxy = params.bounds.y * 0.5 - params.wall * 0.5 - sprite.size.y * 0.5 ;
+            let maxy = params.bounds.y * 0.5 + sprite.size.y;
             let miny = maxy * -1.0;
 
-            if transform.translation.y <= miny {
-                enemy.speed.y *= -1.0;
-            } else if transform.translation.y >= maxy {
-                enemy.speed.y *= -1.0;
+            if transform.translation.y < miny {
+                transform.translation.y = maxy;
+            } else if transform.translation.y > maxy {
+                transform.translation.y = miny;
             }
 
+            transform.rotate(Quat::from_rotation_z((enemy.angle * TIME_STEP).to_radians()));
+
             if transform.translation.x <= (minx + sprite.size.x * 0.5) {
-                commands.entity(entity).despawn();                
+                commands.entity(entity).despawn_recursive();                
             }
         }
     } 
     
     pub fn cleanup(mut commands: Commands, mut query: Query<Entity, With<Enemy>>){
         for entity in query.iter() {
-            commands.entity(entity).despawn();
+            commands.entity(entity).despawn_recursive();
         }
     }
 }

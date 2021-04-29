@@ -33,7 +33,7 @@ impl Balls {
             let ball_speed = (mouse_position - cannon_position).normalize_or_zero() * 500.0;
             
             commands.spawn_bundle(SpriteBundle {
-                material: materials.add(Color::rgb(0.0, 0.0, 1.0).into()),
+                material: materials.add(Color::rgb(1.0, 1.0, 0.0).into()),
                 transform: Transform::from_xyz(cannon_position.x, cannon_position.y, 2.0),
                 sprite: Sprite::new(params.ball.clone()),
                 ..Default::default()

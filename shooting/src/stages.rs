@@ -15,6 +15,7 @@ fn enter_start(
     windows: Res<Windows>,
 ) {
     commands.spawn_bundle(UiCameraBundle::default());
+    commands.spawn_bundle(OrthographicCameraBundle::new_2d());
    
     //params
     let window = windows.get_primary().unwrap();
@@ -24,9 +25,17 @@ fn enter_start(
             cannon: Vec2::new(100.0, 60.0),
             wall: 20.0,
             ball: Vec2::new(10.0, 10.0),
-            asteroid: asset_server.load("images/asteroid.png"),
+            spacejunk_img: asset_server.load("images/space-junk.png"),
+            spacejunk: Vec2::new(250.0, 198.0),
         }
     );  
+
+    // background
+    let texture_handle = asset_server.load("images/space.png");
+    commands.spawn_bundle(SpriteBundle {
+        material: materials.add(texture_handle.into()),
+        ..Default::default()
+    });
 
     add_button(commands, asset_server, materials, "Start", 150.0); 
 }
@@ -36,6 +45,7 @@ fn enter_finish(
     asset_server: Res<AssetServer>,
     mut materials: ResMut<Assets<ColorMaterial>>
 ){
+
     add_button(commands, asset_server, materials, "GameOver", 200.0);
 }
 

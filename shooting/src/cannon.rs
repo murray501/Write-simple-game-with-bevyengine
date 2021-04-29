@@ -48,9 +48,11 @@ impl Cannon {
         }
     }
     
-    pub fn update(keyboard_input: Res<Input<KeyCode>>, mut query: Query<(&Cannon, &mut Transform)>, params: Res<Params>) {
+    pub fn update(keyboard_input: Res<Input<KeyCode>>, mut query: Query<(&Cannon, &mut Transform)>, 
+            params: Res<Params>, windows: Res<Windows>) {
         let (it, mut transform) = query.single_mut().unwrap();
         let mut direction = Vec2::new(0.0, 0.0);
+        
         if keyboard_input.pressed(KeyCode::Up){
             direction.y += 1.0;
         }      
@@ -70,7 +72,7 @@ impl Cannon {
         let translation = &mut transform.translation;
         translation.x += direction.x * it.speed * TIME_STEP;
         translation.y += direction.y * it.speed * TIME_STEP;
-
+        
         let xmax = params.bounds.x / 2.0 - params.cannon.x / 2.0 - params.wall / 2.0; 
         let ymax = params.bounds.y / 2.0 - params.cannon.y / 2.0 - params.wall / 2.0; 
         translation.x = translation.x.min(xmax).max(-xmax);

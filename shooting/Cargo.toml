@@ -4,7 +4,8 @@ version = "0.1.0"
 authors = ["murray501"]
 edition = "2018"
 
-# asset images from "Dive Into SpriteKit by Paul Hudson"
+# credit
+# used sprite images are copied from "Dive Into SpriteKit by Paul Hudson"
 
 [dependencies]
 bevy = "0.5.0"
