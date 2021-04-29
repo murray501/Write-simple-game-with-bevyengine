@@ -1,4 +1,4 @@
-use crate::{Collider, Params, TIME_STEP, Cannon};
+use crate::{Collider, Params, TIME_STEP, Cannon, Direction};
 use bevy::prelude::*;
 
 pub struct BallTimer;
@@ -22,14 +22,26 @@ impl Balls {
             }
         }
 
-        let (_cannon, sprite,transform) = query.single().unwrap();
-        let cannon_position = Vec2::new(transform.translation.x + sprite.size.x * 0.5, transform.translation.y);
+        let (cannon, sprite,transform) = query.single().unwrap();
+        let cannon_position = 
+            if cannon.direction == Direction::Right {
+                Vec2::new(transform.translation.x + sprite.size.x * 0.5, transform.translation.y)
+            } else {
+                Vec2::new(transform.translation.x - sprite.size.x * 0.5, transform.translation.y)
+            };
         
         if mouse_input.just_pressed(MouseButton::Left) && can_shoot {
             let win = windows.get_primary().unwrap();
             let cursor_position = win.cursor_position().unwrap();
             let size = Vec2::new(win.width() as f32, win.height() as f32);
             let mouse_position = cursor_position - size * 0.5;
+
+            if cannon.direction == Direction::Right && mouse_position.x < 0.0 {
+                return;
+            } 
+            if cannon.direction == Direction::Left && mouse_position.x > 0.0 {
+                return;
+            }
             let ball_speed = mouse_position.normalize_or_zero() * 500.0;
             
             commands.spawn_bundle(SpriteBundle {

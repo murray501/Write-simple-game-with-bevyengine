@@ -13,7 +13,7 @@ use bevy::{
 use cannon::Cannon;
 use walls::Walls;
 use balls::{Balls, Ball};
-use enemies::{Enemies, EnemyTimer, Enemy};
+use enemies::{Enemies, EnemyTimer, Enemy, Direction};
 use stages::{AppState, add_other_states, cleanup};
 use particle::Particles;
 

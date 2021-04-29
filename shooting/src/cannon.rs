@@ -1,8 +1,9 @@
-use crate::{Collider, Params, TIME_STEP, Enemy, AppState};
+use crate::{Collider, Params, TIME_STEP, Enemy, AppState, Direction};
 use bevy::prelude::*;
 use bevy::sprite::collide_aabb::collide;
 pub struct Cannon {
-    speed: f32,
+    pub speed: f32,
+    pub direction: Direction
 }
 
 impl Cannon {
@@ -15,11 +16,10 @@ impl Cannon {
         let texture_handle = asset_server.load("images/player-rocket.png");
         commands.spawn_bundle(SpriteBundle {
             material: materials.add(texture_handle.into()),
-            //transform: Transform::from_xyz(-bounds.x * 0.5 + wall_thickness * 0.5 + size.x * 0.5, 0.0, 3.0),
             sprite: Sprite::new(size),
             ..Default::default()
         })
-        .insert(Cannon { speed: 500.0 })
+        .insert(Cannon { speed: 500.0, direction: Direction::Right })
         .insert(Collider::Cannon)
         .with_children(|parent| {
             parent.spawn_bundle(OrthographicCameraBundle::new_2d());
@@ -45,9 +45,9 @@ impl Cannon {
         }
     }
     
-    pub fn update(keyboard_input: Res<Input<KeyCode>>, mut query: Query<(&Cannon, &mut Transform)>, 
+    pub fn update(keyboard_input: Res<Input<KeyCode>>, mut query: Query<(&mut Cannon, &mut Sprite, &mut Transform)>, 
             params: Res<Params>, windows: Res<Windows>) {
-        let (it, mut transform) = query.single_mut().unwrap();
+        let (mut cannon, mut sprite, mut transform) = query.single_mut().unwrap();
         let mut direction = Vec2::new(0.0, 0.0);
         
         if keyboard_input.pressed(KeyCode::Up){
@@ -60,15 +60,19 @@ impl Cannon {
 
         if keyboard_input.pressed(KeyCode::Left){
             direction.x -= 1.0;
+            sprite.flip_x = true;
+            cannon.direction = Direction::Left;
         } 
 
         if keyboard_input.pressed(KeyCode::Right){
             direction.x += 1.0;
+            sprite.flip_x = false;
+            cannon.direction = Direction::Right;
         } 
 
         let translation = &mut transform.translation;
-        translation.x += direction.x * it.speed * TIME_STEP;
-        translation.y += direction.y * it.speed * TIME_STEP;
+        translation.x += direction.x * cannon.speed * TIME_STEP;
+        translation.y += direction.y * cannon.speed * TIME_STEP;
         
         let xmax = params.background.x / 2.0 - params.bounds.x / 2.0 - params.cannon.x / 2.0; 
         let ymax = params.background.y / 2.0 - params.bounds.y / 2.0 - params.cannon.y / 2.0; 

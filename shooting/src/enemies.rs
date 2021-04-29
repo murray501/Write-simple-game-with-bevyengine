@@ -8,7 +8,7 @@ pub struct EnemyTimer;
 pub struct Enemies;
 
 #[derive (PartialEq, Eq)]
-enum Direction {
+pub enum Direction {
     Left,
     Right,
 }
