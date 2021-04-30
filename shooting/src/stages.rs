@@ -18,15 +18,20 @@ fn enter_start(
    
     //params
     let window = windows.get_primary().unwrap();
+    let background_size = Vec2::new(2048.0, 1536.0) * 1.5;
     commands.insert_resource(
         Params {
-            background: Vec2::new(2048.0, 1536.0),
+            background: background_size.to_owned(),
             bounds: Vec2::new(window.width(), window.height()),
-            cannon: Vec2::new(100.0, 60.0),
+            cannon: Vec2::new(200.0, 120.0) * 0.4,
             wall: 20.0,
-            ball: Vec2::new(10.0, 10.0),
+            ball: Vec2::new(15.0, 15.0),
             spacejunk_img: asset_server.load("images/space-junk.png"),
             spacejunk: Vec2::new(250.0, 198.0),
+            enemyship_img: asset_server.load("images/enemy-ship.png"),
+            enemyship: Vec2::new(192.0, 250.0) * 0.3,
+            ball_self_color: materials.add(Color::rgb(1.,1.,0.).into()),
+            ball_enemy_color: materials.add(Color::rgb(0.,1.,1.).into()),
         }
     );  
 
@@ -34,6 +39,7 @@ fn enter_start(
     let texture_handle = asset_server.load("images/space.png");
     commands.spawn_bundle(SpriteBundle {
         material: materials.add(texture_handle.into()),
+        sprite: Sprite::new(background_size),
         ..Default::default()
     });
 
@@ -63,7 +69,7 @@ fn add_button(mut commands: Commands,asset_server: Res<AssetServer>, mut materia
                 align_items: AlignItems::Center,
                 ..Default::default()
             },
-            material: materials.add(Color::rgb(0.3, 0.3, 0.3).into()),
+            material: materials.add(Color::rgba(0.3, 0.3, 0.3, 0.5).into()),
             ..Default::default()
         })
         .with_children(|parent| {

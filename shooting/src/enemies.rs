@@ -1,4 +1,4 @@
-use crate::{Collider, Params, TIME_STEP, Ball, Scoreboard, Particles};
+use crate::{Params, TIME_STEP, Ball, Scoreboard, Particles};
 use bevy::prelude::*;
 use bevy::sprite::collide_aabb::collide;
 use rand::Rng;
@@ -61,9 +61,8 @@ impl Enemies {
                 sprite: Sprite::new(size),
                 ..Default::default()
             })
-            .insert(Enemy {speed: Vec2::new(speedx as f32, speedy as f32), angle: angle as f32, direction})
-            .insert(Collider::Enemy);
-
+            .insert(Enemy {speed: Vec2::new(speedx as f32, speedy as f32), angle: angle as f32, direction});
+            
             let interval = rng.gen_range(1..4); 
             timer.set_duration(std::time::Duration::from_secs(interval));
             timer.reset();

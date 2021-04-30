@@ -1,4 +1,4 @@
-use crate::{Collider, Params, TIME_STEP, Cannon, Direction};
+use crate::{Params, TIME_STEP, Cannon, Direction};
 use bevy::prelude::*;
 
 pub struct BallTimer;
@@ -10,6 +10,17 @@ pub struct Ball {
 }
 
 impl Balls {
+    pub fn spawn(commands: &mut Commands, pos: Vec2, direction: Vec2, params: &Res<Params>) {
+        let material = params.ball_enemy_color.clone();
+        commands.spawn_bundle(SpriteBundle {
+            material: material,
+            transform: Transform::from_xyz(pos.x, pos.y, 2.0),
+            sprite: Sprite::new(params.ball.clone()),
+            ..Default::default()
+        })
+        .insert(Ball { speed: direction * 500.0 });
+    }
+
     pub fn spawner(mut commands: Commands, mouse_input: Res<Input<MouseButton>>, mut materials: ResMut<Assets<ColorMaterial>>, 
         query: Query<(&Cannon, &Sprite, &Transform)>, params: Res<Params>, 
         mut query_timer: Query<&mut Timer, With<BallTimer>>, time: Res<Time>, windows: Res<Windows>)
@@ -35,23 +46,23 @@ impl Balls {
             let cursor_position = win.cursor_position().unwrap();
             let size = Vec2::new(win.width() as f32, win.height() as f32);
             let mouse_position = cursor_position - size * 0.5;
-
+            /* 
             if cannon.direction == Direction::Right && mouse_position.x < 0.0 {
                 return;
             } 
             if cannon.direction == Direction::Left && mouse_position.x > 0.0 {
                 return;
             }
+            */
             let ball_speed = mouse_position.normalize_or_zero() * 500.0;
             
             commands.spawn_bundle(SpriteBundle {
-                material: materials.add(Color::rgb(1.0, 1.0, 0.0).into()),
+                material: params.ball_self_color.clone(),
                 transform: Transform::from_xyz(cannon_position.x, cannon_position.y, 2.0),
                 sprite: Sprite::new(params.ball.clone()),
                 ..Default::default()
             })
-            .insert(Ball { speed: ball_speed })
-            .insert(Collider::Ball);
+            .insert(Ball { speed: ball_speed });
             
             if let Ok(mut timer) = query_timer.single_mut() {
                 timer.reset();

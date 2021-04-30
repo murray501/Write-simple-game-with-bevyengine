@@ -1,9 +1,9 @@
-use crate::{Collider, Params, TIME_STEP, Enemy, AppState, Direction};
+use crate::{Params, TIME_STEP, Enemy, AppState, Direction, Scoreboard, Particles};
 use bevy::prelude::*;
 use bevy::sprite::collide_aabb::collide;
 pub struct Cannon {
     pub speed: f32,
-    pub direction: Direction
+    pub direction: Direction,
 }
 
 impl Cannon {
@@ -20,19 +20,19 @@ impl Cannon {
             ..Default::default()
         })
         .insert(Cannon { speed: 500.0, direction: Direction::Right })
-        .insert(Collider::Cannon)
         .with_children(|parent| {
             parent.spawn_bundle(OrthographicCameraBundle::new_2d());
-            });
+        });
     } 
 
 
-    pub fn collision(mut commands: Commands, mut enemies: Query<(&Sprite, &Transform), With<Enemy>>,
-        mut self_query: Query<(&Sprite, &Transform), With<Cannon>>, mut state: ResMut<State<AppState>>)
+    pub fn collision(mut commands: Commands, mut enemies: Query<(Entity, &Sprite, &Transform), With<Enemy>>,
+        mut self_query: Query<(&Sprite, &Transform), With<Cannon>>, mut state: ResMut<State<AppState>>,
+        mut scoreboard: ResMut<Scoreboard>, particles: Res<Particles>)
     {
         let (self_sprite, self_transform) = self_query.single_mut().unwrap();
     
-        for (sprite, transform) in enemies.iter() {
+        for (entity, sprite, transform) in enemies.iter() {
             let collision = collide(
                 self_transform.translation,
                 self_sprite.size * 0.7,
@@ -40,13 +40,25 @@ impl Cannon {
                 sprite.size * 0.8
             );
             if collision.is_some() {
-                state.set(AppState::Finish).unwrap();
+                let pos = Vec2::new(self_transform.translation.x,self_transform.translation.y); 
+                Particles::spawn(&mut commands, pos, (*particles).clone());
+                commands.entity(entity).despawn();
+                
+                if scoreboard.health > 0 {
+                    scoreboard.health -= 1;
+                }                      
             }
         }
     }
     
     pub fn update(keyboard_input: Res<Input<KeyCode>>, mut query: Query<(&mut Cannon, &mut Sprite, &mut Transform)>, 
-            params: Res<Params>, windows: Res<Windows>) {
+            params: Res<Params>, windows: Res<Windows>, scoreboard: Res<Scoreboard>,
+            mut state: ResMut<State<AppState>>) {
+
+        if scoreboard.health == 0 {
+            state.set(AppState::Finish).unwrap();
+            return;
+        }        
         let (mut cannon, mut sprite, mut transform) = query.single_mut().unwrap();
         let mut direction = Vec2::new(0.0, 0.0);
         
@@ -74,8 +86,10 @@ impl Cannon {
         translation.x += direction.x * cannon.speed * TIME_STEP;
         translation.y += direction.y * cannon.speed * TIME_STEP;
         
-        let xmax = params.background.x / 2.0 - params.bounds.x / 2.0 - params.cannon.x / 2.0; 
-        let ymax = params.background.y / 2.0 - params.bounds.y / 2.0 - params.cannon.y / 2.0; 
+        let xmax = params.background.x / 2.0 - params.cannon.x / 2.0;
+        let ymax = params.background.y / 2.0 - params.cannon.y / 2.0;
+        //let xmax = params.background.x / 2.0 - params.bounds.x / 2.0 - params.cannon.x / 2.0; 
+        //let ymax = params.background.y / 2.0 - params.bounds.y / 2.0 - params.cannon.y / 2.0; 
         translation.x = translation.x.min(xmax).max(-xmax);
         translation.y = translation.y.min(ymax).max(-ymax);
     }
