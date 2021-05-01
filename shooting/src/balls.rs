@@ -1,5 +1,6 @@
-use crate::{Params, TIME_STEP, Cannon, Direction};
+use crate::{Params, TIME_STEP, Cannon, Direction, Collider, Particles, Scoreboard};
 use bevy::prelude::*;
+use bevy::sprite::collide_aabb::collide;
 
 pub struct BallTimer;
 
@@ -18,7 +19,8 @@ impl Balls {
             sprite: Sprite::new(params.ball.clone()),
             ..Default::default()
         })
-        .insert(Ball { speed: direction * 500.0 });
+        .insert(Ball { speed: direction * 500.0 })
+        .insert(Collider::Enemyball);
     }
 
     pub fn spawner(mut commands: Commands, mouse_input: Res<Input<MouseButton>>, mut materials: ResMut<Assets<ColorMaterial>>, 
@@ -46,14 +48,6 @@ impl Balls {
             let cursor_position = win.cursor_position().unwrap();
             let size = Vec2::new(win.width() as f32, win.height() as f32);
             let mouse_position = cursor_position - size * 0.5;
-            /* 
-            if cannon.direction == Direction::Right && mouse_position.x < 0.0 {
-                return;
-            } 
-            if cannon.direction == Direction::Left && mouse_position.x > 0.0 {
-                return;
-            }
-            */
             let ball_speed = mouse_position.normalize_or_zero() * 500.0;
             
             commands.spawn_bundle(SpriteBundle {
@@ -62,7 +56,8 @@ impl Balls {
                 sprite: Sprite::new(params.ball.clone()),
                 ..Default::default()
             })
-            .insert(Ball { speed: ball_speed });
+            .insert(Ball { speed: ball_speed })
+            .insert(Collider::Selfball);
             
             if let Ok(mut timer) = query_timer.single_mut() {
                 timer.reset();
@@ -79,16 +74,35 @@ impl Balls {
         for (entity, ball, mut transform) in query_balls.iter_mut() {
             transform.translation.x += ball.speed.x * TIME_STEP;
             transform.translation.y += ball.speed.y * TIME_STEP;
-            
-            if transform.translation.x >= xbound {
-                commands.entity(entity).despawn();                
-            } else if transform.translation.x <= -xbound {
-                commands.entity(entity).despawn();
-            } else if transform.translation.y >= ybound {
-                commands.entity(entity).despawn();
-            } else if transform.translation.y <= -ybound {
-                commands.entity(entity).despawn();
-            }
         }
+    }
+
+    pub fn collision(mut commands: Commands, 
+        colliders: Query<(Entity, &Sprite, &Transform, &Collider)>,
+        mut scoreboard: ResMut<Scoreboard>,
+        particles: Res<Particles>)
+    {   
+        let selfball = 
+            colliders.iter().filter(|(_,_,_,collider)| **collider == Collider::Selfball);
+        for (entity, sprite, transform, _) in selfball {
+            let enemies = 
+            colliders.iter()
+                .filter(|(_,_,_,collider)| **collider == Collider::Enemyship || **collider == Collider::Spacejunk);
+            for (entity2, sprite2, transform2, _) in enemies {
+                let collision = collide(
+                    transform.translation,
+                    sprite.size,
+                    transform2.translation,
+                    sprite2.size,
+                );
+                if collision.is_some() {
+                    let pos = Vec2::new(transform.translation.x, transform.translation.y);
+                    commands.entity(entity).despawn();
+                    commands.entity(entity2).despawn();
+                    scoreboard.score += 1;
+                    Particles::spawn(&mut commands, pos, (*particles).clone());
+                }            
+            }
+        } 
     }
 }

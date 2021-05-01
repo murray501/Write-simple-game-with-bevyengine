@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::{Enemies, Cannon, scoreboard_reset, Params};
+use crate::{Enemies, Cannon, scoreboard_reset, Params, cleanup_colliders};
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub enum AppState {
@@ -47,9 +47,9 @@ fn enter_start(
 }
 
 fn enter_finish(
-    mut commands: Commands,
+    commands: Commands,
     asset_server: Res<AssetServer>,
-    mut materials: ResMut<Assets<ColorMaterial>>
+    materials: ResMut<Assets<ColorMaterial>>
 ){
 
     add_button(commands, asset_server, materials, "GameOver", 200.0);
@@ -117,7 +117,7 @@ pub fn add_other_states(appbuilder: &mut AppBuilder) -> &mut AppBuilder {
         .add_system_set(SystemSet::on_update(AppState::Finish).with_system(button.system()))
         .add_system_set(SystemSet::on_exit(AppState::Finish)
             .with_system(cleanup.system())
-            .with_system(Enemies::cleanup.system())
+            .with_system(cleanup_colliders.system())
             .with_system(Cannon::reset.system())
             .with_system(scoreboard_reset.system())
         )

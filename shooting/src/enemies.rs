@@ -1,4 +1,4 @@
-use crate::{Params, TIME_STEP, Ball, Scoreboard, Particles};
+use crate::{Params, TIME_STEP, Ball, Scoreboard, Particles, Collider};
 use bevy::prelude::*;
 use bevy::sprite::collide_aabb::collide;
 use rand::Rng;
@@ -16,7 +16,6 @@ pub enum Direction {
 pub struct Enemy {
     speed: Vec2,
     angle: f32,
-    direction: Direction,
 }
 
 impl Enemies {
@@ -61,7 +60,8 @@ impl Enemies {
                 sprite: Sprite::new(size),
                 ..Default::default()
             })
-            .insert(Enemy {speed: Vec2::new(speedx as f32, speedy as f32), angle: angle as f32, direction});
+            .insert(Enemy {speed: Vec2::new(speedx as f32, speedy as f32), angle: angle as f32})
+            .insert(Collider::Spacejunk);
             
             let interval = rng.gen_range(1..4); 
             timer.set_duration(std::time::Duration::from_secs(interval));
@@ -69,29 +69,6 @@ impl Enemies {
         }            
     }
     
-    pub fn collision(mut commands: Commands, mut enemies: Query<(Entity, &Sprite, &Transform), With<Enemy>>,
-        mut balls: Query<(Entity, &Sprite, &Transform), With<Ball>>, mut scoreboard: ResMut<Scoreboard>,
-        particles: Res<Particles>){
-        
-        for (self_entity, self_sprite, self_transform) in enemies.iter() {
-            for (ball_entity, ball_sprite, ball_transform) in balls.iter() {
-                let collision = collide(
-                    self_transform.translation,
-                    self_sprite.size,
-                    ball_transform.translation,
-                    ball_sprite.size
-                );
-                if collision.is_some() {
-                    let pos = Vec2::new(ball_transform.translation.x, ball_transform.translation.y);
-                    commands.entity(self_entity).despawn();
-                    commands.entity(ball_entity).despawn();
-                    scoreboard.score += 1;
-                    Particles::spawn(&mut commands, pos, (*particles).clone());
-                }
-            }
-        }
-    }
-
     pub fn update(mut commands: Commands, mut query: Query<(Entity, &mut Enemy, &Sprite, &mut Transform)>, params: Res<Params>){
     
         
@@ -99,7 +76,7 @@ impl Enemies {
             transform.translation.y += enemy.speed.y * TIME_STEP;
             transform.translation.x += enemy.speed.x * TIME_STEP;
 
-            let maxy = params.background.y * 0.5 + sprite.size.y;
+            let maxy = params.background.y * 0.5 + sprite.size.y * 0.5;
             let miny = maxy * -1.0;
 
             if transform.translation.y < miny {
@@ -112,18 +89,6 @@ impl Enemies {
 
             let maxx = params.background.x * 0.5 + sprite.size.x * 0.5;
             let minx = -maxx;
-
-            if enemy.direction == Direction::Left && transform.translation.x < minx {
-                commands.entity(entity).despawn();                
-            } else if enemy.direction == Direction::Right && transform.translation.x > maxx {
-                commands.entity(entity).despawn();
-            } 
         }
     } 
-    
-    pub fn cleanup(mut commands: Commands, mut query: Query<Entity, With<Enemy>>){
-        for entity in query.iter() {
-            commands.entity(entity).despawn();
-        }
-    }
 }

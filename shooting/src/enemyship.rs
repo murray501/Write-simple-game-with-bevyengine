@@ -1,4 +1,4 @@
-use crate::{Params, TIME_STEP, Balls, Scoreboard, Particles, Cannon};
+use crate::{Params, TIME_STEP, Balls, Scoreboard, Particles, Cannon, Collider};
 use bevy::prelude::*;
 use bevy::sprite::collide_aabb::collide;
 use rand::Rng;
@@ -60,7 +60,8 @@ impl EnemyShips {
                 sprite: Sprite::new(size),
                 ..Default::default()
             })
-            .insert(EnemyShip {speed: 100.0, direction});
+            .insert(EnemyShip {speed: 100.0, direction})
+            .insert(Collider::Enemyship);
             
             let interval = rng.gen_range(5..10); 
             timer.set_duration(std::time::Duration::from_secs(interval));
@@ -74,17 +75,6 @@ impl EnemyShips {
             transform.translation.y += enemy.direction.y * enemy.speed * TIME_STEP;
             transform.translation.x += enemy.direction.x * enemy.speed * TIME_STEP;
         }
-        
-        let size = params.enemyship;
-        let maxx = params.background.x * 0.5 + size.x;
-        let maxy = params.background.y * 0.5 + size.y;
-
-        for (entity, enemy, mut transform) in query.iter_mut() {
-            if transform.translation.x < -maxx || transform.translation.x > maxx ||
-               transform.translation.y < -maxy || transform.translation.y > maxy {
-                commands.entity(entity).despawn(); 
-            } 
-        }    
     } 
     
     pub fn shoot(mut commands: Commands, query: Query<(&Transform, &EnemyShip), 
@@ -98,12 +88,6 @@ impl EnemyShips {
         for (transform, enemyship) in query.iter() {
             let pos = Vec2::new(transform.translation.x, transform.translation.y);
             Balls::spawn(&mut commands, pos, enemyship.direction.to_owned(), &params);
-        }
-    }
-
-    pub fn cleanup(mut commands: Commands, mut query: Query<Entity, With<EnemyShip>>){
-        for entity in query.iter() {
-            commands.entity(entity).despawn();
         }
     }
 }

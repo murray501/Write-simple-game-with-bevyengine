@@ -1,4 +1,4 @@
-use crate::{Params, TIME_STEP, Enemy, AppState, Direction, Scoreboard, Particles};
+use crate::{Params, TIME_STEP, AppState, Direction, Scoreboard, Particles, Collider};
 use bevy::prelude::*;
 use bevy::sprite::collide_aabb::collide;
 pub struct Cannon {
@@ -25,19 +25,26 @@ impl Cannon {
         });
     } 
 
-
-    pub fn collision(mut commands: Commands, mut enemies: Query<(Entity, &Sprite, &Transform), With<Enemy>>,
+    pub fn collision(mut commands: Commands, mut colliders: Query<(Entity, &Sprite, &Transform, &Collider)>,
         mut self_query: Query<(&Sprite, &Transform), With<Cannon>>, mut state: ResMut<State<AppState>>,
         mut scoreboard: ResMut<Scoreboard>, particles: Res<Particles>)
     {
         let (self_sprite, self_transform) = self_query.single_mut().unwrap();
     
-        for (entity, sprite, transform) in enemies.iter() {
+        let colliders = colliders.iter()
+            .filter(|(_,_,_,collider)| **collider != Collider::Selfball);
+        
+        for (entity, sprite, transform, collider) in colliders {
+            let coeff = if * collider == Collider::Enemyball {
+                1.0
+            } else {
+                0.7
+            };
             let collision = collide(
                 self_transform.translation,
                 self_sprite.size * 0.7,
                 transform.translation,
-                sprite.size * 0.8
+                sprite.size * coeff
             );
             if collision.is_some() {
                 let pos = Vec2::new(self_transform.translation.x,self_transform.translation.y); 
@@ -88,8 +95,6 @@ impl Cannon {
         
         let xmax = params.background.x / 2.0 - params.cannon.x / 2.0;
         let ymax = params.background.y / 2.0 - params.cannon.y / 2.0;
-        //let xmax = params.background.x / 2.0 - params.bounds.x / 2.0 - params.cannon.x / 2.0; 
-        //let ymax = params.background.y / 2.0 - params.bounds.y / 2.0 - params.cannon.y / 2.0; 
         translation.x = translation.x.min(xmax).max(-xmax);
         translation.y = translation.y.min(ymax).max(-ymax);
     }

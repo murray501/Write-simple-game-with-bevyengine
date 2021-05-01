@@ -8,11 +8,12 @@ mod enemyship;
 use bevy::{
     prelude::*,
     render::pass::ClearColor,
+    sprite::collide_aabb::collide,
 };
 
 use cannon::Cannon;
 use balls::{Balls, Ball};
-use enemies::{Enemies, EnemyTimer, Enemy, Direction};
+use enemies::{Enemies, EnemyTimer, Direction};
 use enemyship::{EnemyShipTimer, EnemyShips, EnemyShotTimer};
 use stages::{AppState, add_other_states, cleanup};
 use particle::Particles;
@@ -40,7 +41,13 @@ pub struct Scoreboard {
     score: usize,
     health: usize,
 }
-
+#[derive(Eq, PartialEq)]
+pub enum Collider {
+    Spacejunk,
+    Enemyship,
+    Enemyball,
+    Selfball,
+}
 fn main() {
     let args: Vec<String> = env::args().collect();
     let mut width: f32 = 1280.0;
@@ -88,8 +95,8 @@ fn add_game_state(appbuilder: &mut AppBuilder) -> &mut AppBuilder {
             .with_system(Cannon::update.system())
             .with_system(Cannon::collision.system())
             .with_system(Balls::update.system())
+            .with_system(Balls::collision.system())
             .with_system(Enemies::update.system())
-            .with_system(Enemies::collision.system())
             .with_system(Balls::spawner.system())
             .with_system(Enemies::spawner.system())
             .with_system(scoreboard_system.system())
@@ -97,7 +104,9 @@ fn add_game_state(appbuilder: &mut AppBuilder) -> &mut AppBuilder {
             .with_system(Particles::update.system())
             .with_system(EnemyShips::spawner.system())
             .with_system(EnemyShips::update.system())
-            .with_system(EnemyShips::shoot.system()))
+            .with_system(EnemyShips::shoot.system())
+            .with_system(cleanup_boundaries.system())
+        )
 }
 
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>, mut materials: ResMut<Assets<ColorMaterial>>)
@@ -205,3 +214,25 @@ fn timer_system(time: Res<Time>, mut timer: ResMut<MainTimer>, mut state: ResMut
         state.set(AppState::Finish).unwrap();
     }
 }
+
+pub fn cleanup_colliders(mut commands: Commands, mut query: Query<Entity, With<Collider>>){
+    for entity in query.iter() {
+        commands.entity(entity).despawn();
+    }
+}
+
+pub fn cleanup_boundaries(mut commands: Commands, 
+        params: Res<Params>, mut query: Query<(Entity, &Sprite, &Transform), With<Collider>>)
+{
+    for (entity, sprite, transform) in query.iter() {
+        let maxx = params.background.x * 0.5 + sprite.size.x;
+        let maxy = params.background.y * 0.5 + sprite.size.y;
+        let x = transform.translation.x;
+        let y = transform.translation.y;
+
+        if x < -maxx || x > maxx || y < -maxy || y > maxy {
+            commands.entity(entity).despawn();
+        }
+    }
+}
+
