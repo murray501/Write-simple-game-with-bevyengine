@@ -74,7 +74,7 @@ fn main() {
         })
         .add_plugins(DefaultPlugins)
         .add_state(AppState::Start)
-        .insert_resource(Scoreboard { score: 0, health: 3 })
+        .insert_resource(Scoreboard { score: 0, health: 5 })
         .insert_resource(ClearColor(Color::rgb(0., 0., 0.)))
         .insert_resource(MainTimer(Timer::from_seconds(180.0, false)));
     
@@ -124,7 +124,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>, mut materials: 
     commands.insert_resource(Particles {
         speed: 100.0,
         num_divide: 8,
-        material: materials.add(Color::rgb(1.0, 0.0, 0.0).into())
+        material:materials.add(asset_server.load("images/imgbin_explosion-sprite-png.png").into())
     });   
         
     // scoreboard

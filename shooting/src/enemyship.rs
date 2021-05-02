@@ -87,7 +87,16 @@ impl EnemyShips {
         } 
         for (transform, enemyship) in query.iter() {
             let pos = Vec2::new(transform.translation.x, transform.translation.y);
-            Balls::spawn(&mut commands, pos, enemyship.direction.to_owned(), &params);
+            Balls::spawn(&mut commands, pos.to_owned(), enemyship.direction.to_owned(), &params);
+
+            let radian = enemyship.direction.y.atan2(enemyship.direction.x);
+            let angle1 = radian + std::f32::consts::PI * 0.1;
+            let direction1 = Vec2::new(angle1.cos(), angle1.sin());
+            Balls::spawn(&mut commands, pos.to_owned(), direction1, &params);
+
+            let angle2 = radian - std::f32::consts::PI * 0.1;
+            let direction2 = Vec2::new(angle2.cos(), angle2.sin());
+            Balls::spawn(&mut commands, pos, direction2, &params);
         }
     }
 }
