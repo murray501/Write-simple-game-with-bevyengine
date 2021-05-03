@@ -35,7 +35,7 @@ impl Cannon {
             .filter(|(_,_,_,collider)| **collider != Collider::Selfball);
         
         for (entity, sprite, transform, collider) in colliders {
-            let coeff = if * collider == Collider::Enemyball {
+            let coeff = if * collider == Collider::Enemyball || *collider == Collider::Energy {
                 1.0
             } else {
                 0.7
@@ -48,12 +48,15 @@ impl Cannon {
             );
             if collision.is_some() {
                 let pos = Vec2::new(self_transform.translation.x,self_transform.translation.y); 
-                Particles::spawn(&mut commands, pos, (*particles).clone());
+                if *collider == Collider::Energy {
+                    scoreboard.health += 1;
+                } else {
+                    Particles::spawn(&mut commands, pos, (*particles).clone());
+                    if scoreboard.health > 0 {
+                        scoreboard.health -= 1;
+                    }          
+                }
                 commands.entity(entity).despawn();
-                
-                if scoreboard.health > 0 {
-                    scoreboard.health -= 1;
-                }                      
             }
         }
     }

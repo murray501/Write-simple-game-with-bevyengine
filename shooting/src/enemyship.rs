@@ -11,6 +11,7 @@ pub struct EnemyShips;
 pub struct EnemyShip {
     speed: f32,
     direction: Vec2,
+    special: bool
 }
 
 impl EnemyShips {
@@ -45,6 +46,8 @@ impl EnemyShips {
                 Vec2::new(rand_x, maxy)
             };
         
+        let random = rng.gen_range(0.0..1.0) as f32;
+        let special = random < 0.5;
         let cannon_transform = query_cannon.single().unwrap();
         let cannon_pos = Vec2::new(cannon_transform.translation.x, cannon_transform.translation.y);
         let direction = (cannon_pos - pos).normalize();
@@ -60,7 +63,7 @@ impl EnemyShips {
                 sprite: Sprite::new(size),
                 ..Default::default()
             })
-            .insert(EnemyShip {speed: 100.0, direction})
+            .insert(EnemyShip {speed: 100.0, direction, special})
             .insert(Collider::Enemyship);
             
             let interval = rng.gen_range(5..10); 
@@ -89,14 +92,16 @@ impl EnemyShips {
             let pos = Vec2::new(transform.translation.x, transform.translation.y);
             Balls::spawn(&mut commands, pos.to_owned(), enemyship.direction.to_owned(), &params);
 
-            let radian = enemyship.direction.y.atan2(enemyship.direction.x);
-            let angle1 = radian + std::f32::consts::PI * 0.1;
-            let direction1 = Vec2::new(angle1.cos(), angle1.sin());
-            Balls::spawn(&mut commands, pos.to_owned(), direction1, &params);
+            if enemyship.special {
+                let radian = enemyship.direction.y.atan2(enemyship.direction.x);
+                let angle1 = radian + std::f32::consts::PI * 0.25;
+                let direction1 = Vec2::new(angle1.cos(), angle1.sin());
+                Balls::spawn(&mut commands, pos.to_owned(), direction1, &params);
 
-            let angle2 = radian - std::f32::consts::PI * 0.1;
-            let direction2 = Vec2::new(angle2.cos(), angle2.sin());
-            Balls::spawn(&mut commands, pos, direction2, &params);
+                let angle2 = radian - std::f32::consts::PI * 0.25;
+                let direction2 = Vec2::new(angle2.cos(), angle2.sin());
+                Balls::spawn(&mut commands, pos, direction2, &params);
+            }
         }
     }
 }

@@ -4,6 +4,7 @@ mod enemies;
 mod stages;
 mod particle;
 mod enemyship;
+mod energy;
 
 use bevy::{
     prelude::*,
@@ -15,6 +16,7 @@ use cannon::Cannon;
 use balls::{Balls, Ball};
 use enemies::{Enemies, EnemyTimer, Direction};
 use enemyship::{EnemyShipTimer, EnemyShips, EnemyShotTimer};
+use energy::Energy;
 use stages::{AppState, add_other_states, cleanup};
 use particle::Particles;
 use std::env;
@@ -35,6 +37,9 @@ pub struct Params {
     pub enemyship: Vec2,
     pub ball_self_color: Handle<ColorMaterial>,
     pub ball_enemy_color: Handle<ColorMaterial>,
+    pub energy_img: Handle<ColorMaterial>,
+    pub num_of_energies: usize,
+    pub energy: Vec2,
 }
 
 pub struct Scoreboard {
@@ -47,6 +52,7 @@ pub enum Collider {
     Enemyship,
     Enemyball,
     Selfball,
+    Energy,
 }
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -74,7 +80,7 @@ fn main() {
         })
         .add_plugins(DefaultPlugins)
         .add_state(AppState::Start)
-        .insert_resource(Scoreboard { score: 0, health: 5 })
+        .insert_resource(Scoreboard { score: 0, health: 3 })
         .insert_resource(ClearColor(Color::rgb(0., 0., 0.)))
         .insert_resource(MainTimer(Timer::from_seconds(180.0, false)));
     
@@ -90,6 +96,7 @@ fn add_game_state(appbuilder: &mut AppBuilder) -> &mut AppBuilder {
             .with_system(cleanup.system())
             .with_system(setup.system())
             .with_system(Cannon::setup.system())
+            .with_system(Energy::setup.system())
         )
         .add_system_set(SystemSet::on_update(AppState::InGame)
             .with_system(Cannon::update.system())
@@ -106,6 +113,7 @@ fn add_game_state(appbuilder: &mut AppBuilder) -> &mut AppBuilder {
             .with_system(EnemyShips::update.system())
             .with_system(EnemyShips::shoot.system())
             .with_system(cleanup_boundaries.system())
+            .with_system(Energy::collision.system())
         )
 }
 

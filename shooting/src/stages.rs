@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::{Enemies, Cannon, scoreboard_reset, Params, cleanup_colliders};
+use crate::{Cannon, scoreboard_reset, Params, cleanup_colliders, Energy};
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub enum AppState {
@@ -32,6 +32,9 @@ fn enter_start(
             enemyship: Vec2::new(192.0, 250.0) * 0.3,
             ball_self_color: materials.add(asset_server.load("images/mybullet.png").into()),
             ball_enemy_color: materials.add(asset_server.load("images/enemybullet.png").into()),
+            energy_img: materials.add(asset_server.load("images/energy.png").into()),
+            num_of_energies: 5,
+            energy: Vec2::new(64.0, 64.0),
         }
     );  
 
@@ -120,5 +123,6 @@ pub fn add_other_states(appbuilder: &mut AppBuilder) -> &mut AppBuilder {
             .with_system(cleanup_colliders.system())
             .with_system(Cannon::reset.system())
             .with_system(scoreboard_reset.system())
+            .with_system(Energy::setup.system())
         )
 }
