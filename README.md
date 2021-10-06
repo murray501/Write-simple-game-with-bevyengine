@@ -1,4 +1,5 @@
 # turbo-waffle
-programming practice
+
+write simple games with bevyengine.
 
 https://bevyengine.org/
